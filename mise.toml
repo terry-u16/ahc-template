@@ -1,0 +1,9 @@
+[tasks.tools]
+description = "build tools"
+run = [
+    "seq 0 5000 > seeds.txt",
+    "cargo run -r --bin gen seeds.txt --dir ../pahcer/in",
+    "cargo build -r --bin {% if is-interactive %}tester{% else %}vis{% endif %}",
+    "mv {% if is-interactive %}../../target/release/tester ../tester{% else %}../../target/release/vis ../vis{% endif %}",
+]
+dir = "./tools"

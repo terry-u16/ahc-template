@@ -1,0 +1,47 @@
+[general]
+version = "0.3.0"
+
+[problem]
+problem_name = "{{project-name}}"
+{% if minimize %}objective = "Min"{% else %}objective = "Max"{% endif %}
+score_regex = '(?m)^\s*Score\s*=\s*(?P<score>\d+)\s*$'
+
+[test]
+start_seed = 0
+end_seed = 128
+threads = 0
+out_dir = "./pahcer"
+
+[[test.compile_steps]]
+program = "cargo"
+args = ["build", "--release"]
+
+[[test.compile_steps]]
+program = "rm"
+args = ["-f", "./{{project-name}}"]
+
+[[test.compile_steps]]
+program = "mv"
+args = ["../target/release/{{project-name}}", "./{{project-name}}"]
+{% if is-interactive %}
+[[test.test_steps]]
+program = "./tester"
+args = ["./{{project-name}}"]
+stdin = "./pahcer/in/{SEED04}.txt"
+stdout = "./pahcer/out/{SEED04}.txt"
+stderr = "./pahcer/err/{SEED04}.txt"
+measure_time = true
+{% else %}
+[[test.test_steps]]
+program = "./{{project-name}}"
+args = []
+stdin = "./pahcer/in/{SEED04}.txt"
+stdout = "./pahcer/out/{SEED04}.txt"
+stderr = "./pahcer/err/{SEED04}.txt"
+measure_time = true
+
+[[test.test_steps]]
+program = "./vis"
+args = ["./pahcer/in/{SEED04}.txt", "./pahcer/out/{SEED04}.txt"]
+measure_time = false
+{% endif %}

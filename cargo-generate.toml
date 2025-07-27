@@ -1,0 +1,8 @@
+[template]
+name = "ahc-template"
+description = "A template for AHC"
+version = "0.1.0"
+
+[placeholders]
+minimize = { type = "bool", prompt = "Minimize score?" }
+is-interactive = { type = "bool", prompt = "Enable interactive mode?" }
