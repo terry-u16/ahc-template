@@ -1,3 +1,11 @@
+[tasks.dl]
+description = "download tools"
+run = [
+    'curl -L -o tools.zip {{arg(name="url")}}',
+    'unzip -q tools.zip',
+    'rm tools.zip',
+]
+
 [tasks.tools]
 description = "build tools"
 run = [
