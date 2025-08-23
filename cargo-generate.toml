@@ -2,7 +2,7 @@
 name = "ahc-template"
 description = "A template for AHC"
 version = "0.1.0"
-exclude = ["src/diagnostics.rs"]
+exclude = ["mise.toml", "src/diagnostics.rs"]
 
 [placeholders]
 minimize = { type = "bool", prompt = "Minimize score?" }
