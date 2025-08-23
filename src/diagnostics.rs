@@ -132,12 +132,12 @@ impl Drop for Perf {
 
 #[macro_export]
 macro_rules! perf {
-    ($name: expr, $body: expr) => {{
+    ($name: expr, $body: expr) => {% raw %}{{
         let sw = Perf::start_singleton($name);
         let result = $body;
         sw.stop();
         result
-    }};
+    }}{% endraw %};
 }
 
 pub struct StopWatch<M: WithMut<Perf>> {
