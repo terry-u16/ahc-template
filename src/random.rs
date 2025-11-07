@@ -101,7 +101,7 @@ impl<G: Rng> RandExtension for G {
         range1: R1,
     ) -> (T0, T1) {
         let rand_value = self.next_u64();
-        let v0 = gen_range_u32(range0, (rand_value >> 0) as u32);
+        let v0 = gen_range_u32(range0, rand_value as u32);
         let v1 = gen_range_u32(range1, (rand_value >> 32) as u32);
         (v0, v1)
     }
@@ -125,7 +125,7 @@ impl<G: Rng> RandExtension for G {
         range1: R1,
     ) -> (T0, T1) {
         let rand_value = self.next_u64();
-        let v0 = gen_range_u16(range0, (rand_value >> 0) as u16);
+        let v0 = gen_range_u16(range0, rand_value as u16);
         let v1 = gen_range_u16(range1, (rand_value >> 16) as u16);
         (v0, v1)
     }
@@ -144,7 +144,7 @@ impl<G: Rng> RandExtension for G {
         range2: R2,
     ) -> (T0, T1, T2) {
         let rand_value = self.next_u64();
-        let v0 = gen_range_u16(range0, (rand_value >> 0) as u16);
+        let v0 = gen_range_u16(range0, rand_value as u16);
         let v1 = gen_range_u16(range1, (rand_value >> 16) as u16);
         let v2 = gen_range_u16(range2, (rand_value >> 32) as u16);
         (v0, v1, v2)
@@ -167,7 +167,7 @@ impl<G: Rng> RandExtension for G {
         range3: R3,
     ) -> (T0, T1, T2, T3) {
         let rand_value = self.next_u64();
-        let v0 = gen_range_u16(range0, (rand_value >> 0) as u16);
+        let v0 = gen_range_u16(range0, rand_value as u16);
         let v1 = gen_range_u16(range1, (rand_value >> 16) as u16);
         let v2 = gen_range_u16(range2, (rand_value >> 32) as u16);
         let v3 = gen_range_u16(range3, (rand_value >> 48) as u16);
@@ -215,7 +215,7 @@ impl<T: PrimInt> BoundedRange<T> for Range<T> {
     }
 
     fn is_empty(&self) -> bool {
-        !(self.start < self.end)
+        self.start >= self.end
     }
 }
 
@@ -229,7 +229,7 @@ impl<T: PrimInt> BoundedRange<T> for RangeInclusive<T> {
     }
 
     fn is_empty(&self) -> bool {
-        !(self.start() <= self.end())
+        self.start() > self.end()
     }
 }
 
@@ -242,7 +242,7 @@ mod tests {
 
     fn check_range<R: BoundedRange<usize> + Clone, F: Fn(&mut StdRng, R) -> usize>(
         range: R,
-        gen: F,
+        generator: F,
     ) {
         let mut rng = StdRng::seed_from_u64(42);
         let mut values = HashSet::new();
@@ -251,13 +251,13 @@ mod tests {
         let end = start + width;
 
         for _ in 0..10000 {
-            let v = gen(&mut rng, range.clone());
-            assert!(start <= v && v < end, "value {:?} out of range", v);
+            let v = generator(&mut rng, range.clone());
+            assert!(start <= v && v < end, "value {v:?} out of range");
             values.insert(v);
         }
 
         for v in start..end {
-            assert!(values.contains(&v), "value {:?} not generated", v);
+            assert!(values.contains(&v), "value {v:?} not generated");
         }
     }
 
