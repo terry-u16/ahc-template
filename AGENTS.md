@@ -32,7 +32,7 @@
 解法を改良したら `pahcer run` を実行し、平均スコアが改善したかを必ず確認してください。改善が確認できない場合は、 seed ごとの差分やログを残して原因を追います。
 
 ## コーディング規約と命名
-Rust 2024 エディションの標準に従い、コミット前に `cargo fmt`、ヒューリスティックや unsafe を触った際は `cargo clippy --all-targets` を実行します。関数・変数は `snake_case`、定数は `SCREAMING_SNAKE_CASE`、型は `UpperCamelCase`。`grid.rs` はグリッド計算、`util.rs` は共通ルーチンと分離し、再利用関数には `///` ドキュメントや doctest を付記してください。`diagnostics.rs` のロギングは実行時間に影響するため feature flag や `cfg!(debug_assertions)` で切り替え可能にすると便利です。
+Rust 2024 エディションの標準に従い、コミット前に `cargo fmt` を実行します。関数・変数は `snake_case`、定数は `SCREAMING_SNAKE_CASE`、型は `UpperCamelCase`。`grid.rs` はグリッド計算、`util.rs` は共通ルーチンと分離し、再利用関数には `///` ドキュメントや doctest を付記してください。`diagnostics.rs` のロギングは実行時間に影響するため feature flag や `cfg!(debug_assertions)` で切り替え可能にすると便利です。
 
 ## テスト指針
 各モジュール直下で `#[cfg(test)]` を使った単体テストを置き、 `cargo test` を行ってください。回帰検証は seed を固定して `uv run single.py -s <SEED>` を実行し、得点を標準出力から読み取ってください。決定的でない場合は必ずしもスコアを一致させる必要はありませんが、大きなデグレが起きていないか確認してください。`single.py` が保存する `err.txt` は debug `println!` の確認にも使えるので、失敗ケースの再現手順と合わせて添付するとレビューがスムーズです。
