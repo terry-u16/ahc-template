@@ -3,7 +3,10 @@
 このリポジトリは AtCoder Heuristic Contest の問題を解くためのソルバと付属ツールをまとめたものです。
 
 ## プロジェクト構成とモジュール
-- Rust 製ソルバ本体は `src/` にあり、`main.rs` が `grid.rs`（盤面操作）、`random.rs`（乱数・seed 管理）、`diagnostics.rs`（ログや計測）、`util.rs`（共通マクロ・トレイト）を束ねます。
+- Rust 製ソルバ本体は `src/` にあり、`main.rs` がルートファイルです。
+  - `grid.rs`（盤面操作）、`random.rs`（乱数・seed 管理）、`diagnostics.rs`（ログや計測）、`util.rs`（共通マクロ・トレイト）は初期ライブラリです。2次元グリッド問題の場合、 `Vec<Vec<T>>` ではなく `Map2d<T>` を使用してください。
+  - 問題文の入力・出力はそれぞれ `problem.rs` の中に `Input`, `Output` という構造体としてまとめてください。 `Input` は `Input::read() -> Self` 関数を持ち、標準入力から入力を読み取って初期化できるようにします。 `Output` は `Display` トレイトを実装し、標準出力への書き出しが容易となるようにしてください。
+  - `Input`, `Output` のメンバ変数名は必ずしも問題文と一致させる必要はありません。明瞭かつ簡潔なメンバ変数名とし、 `///` ドキュメントでそれぞれの変数名の意味を補足してください。
 - AtCoder 配布ツールは `tools/` にまとまっていますが、基本的に触る必要はありません。`tools/` がビルドされていないことによるエラーが想定される場合、ユーザーに報告して対処してもらってください。
 - ローカルで使う入力は `/pahcer/in/` 以下に置き、`single.py` や `pahcer_config.toml` が参照します。
 - pahcer 自体の使い方は https://github.com/terry-u16/pahcer も参照してください。
