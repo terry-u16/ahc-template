@@ -13,7 +13,7 @@
 - AtCoder 配布ツールは `tools/` にまとまっていますが、基本的に触る必要はありません。`tools/` がビルドされていないことによるエラーが想定される場合、ユーザーに報告して対処してもらってください。
 - ローカルで使う入力は `/pahcer/in/` 以下に置き、`single.py` や `pahcer_config.toml` が参照します。
 - pahcer 自体の使い方は https://github.com/terry-u16/pahcer も参照してください。
-- 巨大な実験データや `vis.html` の結果は `.gitignore` するか外部ストレージに保管し、`problem.html` は問題文（原文 HTML）を保管する参照専用ファイルとして扱ってください。
+- 巨大な実験データや `vis.html` の結果は `.gitignore` するか外部ストレージに保管し、`problem.html` もしくは `problem.md` は問題文を保管する参照専用ファイルとして扱ってください。
 - 入力処理は `proconio` クレートに統一しており、原則として `input!` マクロを使ってください。
 - pythonスクリプトの実行には `python` や `python3` ではなく `uv run` を使います。
 - `./Cargo.toml` の内容はAtCoderのジャッジサーバーと合わせているので、クレートの追加をはじめとした編集を行ってはいけません。
@@ -25,14 +25,14 @@
 ## ビルド・テスト・開発コマンド
 - `uv run single.py -s <SEED>`: 入力ケース `<SEED>` で最適化を実行します。 `/pahcer/in/` 以下に置かれた指定されたケースのファイルを入力として読み込み、スコアを標準出力に出力します。 `out.txt` に解法コードの標準出力が、 `err.txt` に解法コードの標準エラー出力が、 `vis.html` にビジュアライズ結果が保存されます。
   - 実行例: `uv run single.py -s 0`
-- `pahcer run`: `pahcer_config.toml` の設定に従って `/pahcer/in/` を入力群として読み込み、テストケースを並列実行します。
+- `pahcer run -c "<comment>"`: `pahcer_config.toml` の設定に従って `/pahcer/in/` を入力群として読み込み、テストケースを並列実行します。 `<comment>` には変更内容を簡潔に書いてください。日本語でも英語でも構いませんが、日本語の方が文字数を圧縮できて一覧性が上がるので好ましいです。
 - `pahcer list`: 直近10回の `pahcer run` の結果を出力します。前回の結果から改善したかどうかの判断に使います。
 
 ### サンドボックス実行時の注意
 `uv run single.py` や `pahcer run` は `target/` 以下に大量のファイルを書き込むため、サンドボックス環境だと `Invalid cross-device link` や `Permission denied` で失敗する可能性があります。これらのコマンドを実行する際は、必ずサンドボックス外（エスカレーションあり）の権限で動かしてください。
 
 ### スコア改善の確認
-解法を改良したら `pahcer run` を実行し、平均スコアが改善したかを必ず確認してください。改善が確認できない場合は、 seed ごとの差分やログを残して原因を追います。
+解法を改良したら `pahcer run -c "<comment>"` を実行し、平均スコアが改善したかを必ず確認してください。改善が確認できない場合は、 seed ごとの差分やログを残して原因を追います。
 
 ## コーディング規約と命名
 Rust 2024 エディションの標準に従い、コミット前に `cargo fmt` を実行します。関数・変数は `snake_case`、定数は `SCREAMING_SNAKE_CASE`、型は `UpperCamelCase`。`grid.rs` はグリッド計算、`util.rs` は共通ルーチンと分離し、再利用関数には `///` ドキュメントや doctest を付記してください。`diagnostics.rs` のロギングは実行時間に影響するため feature flag や `cfg!(debug_assertions)` で切り替え可能にすると便利です。
