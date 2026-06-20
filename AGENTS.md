@@ -13,7 +13,8 @@
 - AtCoder 配布ツールは `tools/` にまとまっていますが、基本的に触る必要はありません。`tools/` がビルドされていないことによるエラーが想定される場合、ユーザーに報告して対処してもらってください。
 - ローカルで使う入力は `/pahcer/in/` 以下に置き、`single.py` や `pahcer_config.toml` が参照します。
 - pahcer 自体の使い方は https://github.com/terry-u16/pahcer も参照してください。
-- 巨大な実験データや `vis.html` の結果は `.gitignore` するか外部ストレージに保管し、`problem.html` もしくは `problem.md` は問題文を保管する参照専用ファイルとして扱ってください。
+- 巨大な実験データや `vis.html` の結果は `.gitignore` するか外部ストレージに保管してください。
+- `problem.md` は問題文を保管する参照専用ファイルとして扱ってください。存在しない場合は、ユーザーに `atcoder-problem-md` skillsを使って作成するよう依頼してください。 `problem.html` は `problem.md` の生成元のファイルで、冗長な内容が含まれているため、参照する必要はありません。
 - 入力処理は `proconio` クレートに統一しており、原則として `input!` マクロを使ってください。
 - pythonスクリプトの実行には `python` や `python3` ではなく `uv run` を使います。
 - `./Cargo.toml` の内容はAtCoderのジャッジサーバーと合わせているので、クレートの追加をはじめとした編集を行ってはいけません。

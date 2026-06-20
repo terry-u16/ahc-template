@@ -1,0 +1,4 @@
+interface:
+  display_name: "AtCoder Problem Markdown"
+  short_description: "AtCoder問題文HTMLを日本語Markdown化"
+  default_prompt: "Use $atcoder-problem-md to convert an AtCoder problem.html file into faithful Japanese problem.md."
