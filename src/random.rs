@@ -236,8 +236,8 @@ impl<T: PrimInt> BoundedRange<T> for RangeInclusive<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::rngs::StdRng;
     use rand::SeedableRng;
+    use rand::rngs::StdRng;
     use std::collections::HashSet;
 
     fn check_range<R: BoundedRange<usize> + Clone, F: Fn(&mut StdRng, R) -> usize>(

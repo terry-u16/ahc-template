@@ -28,7 +28,7 @@ use std::{
 ///     _sum += i;
 ///     sw.stop();
 ///
-///     // 名前は&'strでもStringでもOK
+///     // 名前は&'static strでもStringでもOK
 ///     let sw = perf.start(format!("no-op"));
 ///     sw.stop();
 /// }
@@ -82,7 +82,7 @@ impl Perf {
     }
 
     /// 計測を開始する
-    pub fn start<'a>(&'a mut self, name: impl Into<Cow<'static, str>>) -> StopWatch<&'a mut Perf> {
+    pub fn start(&mut self, name: impl Into<Cow<'static, str>>) -> StopWatch<&mut Perf> {
         let name = name.into();
 
         StopWatch {
@@ -92,7 +92,7 @@ impl Perf {
         }
     }
 
-    /// 計測を開始する（シングルトン）
+    /// 計測を開始する（スレッドごとのシングルトン）
     pub fn start_singleton(name: impl Into<Cow<'static, str>>) -> StopWatch<Rc<RefCell<Perf>>> {
         Self::SINGLETON.with(|perf| StopWatch {
             start: Instant::now(),
@@ -114,10 +114,10 @@ impl Drop for Perf {
 
         if is_tty {
             // コンソール → 色付き
-            eprintln!("\x1b[35m[{}] Performance measures\x1b[0m", name);
+            eprintln!("\x1b[35m[{name}] Performance measures\x1b[0m");
         } else {
             // リダイレクト → 色なし
-            eprintln!("[{}] Performance measures", name);
+            eprintln!("[{name}] Performance measures");
         }
 
         for (name, measure) in self
@@ -125,19 +125,19 @@ impl Drop for Perf {
             .iter()
             .sorted_unstable_by(|(a, _), (b, _)| a.as_ref().cmp(b.as_ref()))
         {
-            eprintln!("{}: {}", name, measure);
+            eprintln!("{name}: {measure}");
         }
     }
 }
 
 #[macro_export]
 macro_rules! perf {
-    ($name: expr, $body: expr) => {% raw %}{{
+    ($name: expr, $body: expr) => {{
         let sw = Perf::start_singleton($name);
         let result = $body;
         sw.stop();
         result
-    }}{% endraw %};
+    }};
 }
 
 pub struct StopWatch<M: WithMut<Perf>> {
@@ -160,7 +160,7 @@ impl<M: WithMut<Perf>> Drop for StopWatch<M> {
         self.perf.with_mut(|perf| {
             perf.measures
                 .entry(name)
-                .or_insert_with(Measure::new)
+                .or_default()
                 .add_measure(&duration)
         })
     }
@@ -174,10 +174,6 @@ struct Measure {
 }
 
 impl Measure {
-    fn new() -> Self {
-        Self::default()
-    }
-
     fn add_measure(&mut self, duration: &Duration) {
         let sec = duration.as_secs_f64();
         self.sum += sec;
@@ -193,8 +189,9 @@ impl Measure {
     fn std_dev(&self) -> Duration {
         assert_ne!(self.cnt, 0);
 
-        let mean = self.mean().as_secs_f64();
-        let variance = (self.sum_sq / self.cnt as f64) - (mean * mean);
+        // Durationへの丸めは最後に行い、浮動小数点の丸め誤差も吸収する。
+        let mean = self.sum / self.cnt as f64;
+        let variance = ((self.sum_sq / self.cnt as f64) - (mean * mean)).max(0.0);
         Duration::from_secs_f64(variance.sqrt())
     }
 }
@@ -211,7 +208,7 @@ impl Display for Measure {
     }
 }
 
-/// &mut T と Rc<RefCell<T>> を統一的に扱って処理を行うためのトレイト
+/// `&mut T` と `Rc<RefCell<T>>` を統一的に扱って処理を行うためのトレイト
 pub trait WithMut<T> {
     fn with_mut<R>(&mut self, f: impl FnOnce(&mut T) -> R) -> R;
 }
@@ -226,5 +223,32 @@ impl<T> WithMut<T> for Rc<RefCell<T>> {
     fn with_mut<R>(&mut self, f: impl FnOnce(&mut T) -> R) -> R {
         let mut guard = self.borrow_mut();
         f(&mut *guard)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn standard_deviation_handles_subnanosecond_mean() {
+        let mut measure = Measure::default();
+        for nanos in [1000, 1001, 1001] {
+            measure.add_measure(&Duration::from_nanos(nanos));
+        }
+        assert_eq!(measure.mean(), Duration::from_nanos(1001));
+        assert_eq!(measure.std_dev(), Duration::ZERO);
+        assert!(!measure.to_string().is_empty());
+    }
+
+    #[test]
+    fn standard_deviation_matches_known_values() {
+        for (samples, expected) in [(vec![1000, 2000], 500), (vec![1001; 1000], 0), (vec![0], 0)] {
+            let mut measure = Measure::default();
+            for nanos in samples {
+                measure.add_measure(&Duration::from_nanos(nanos));
+            }
+            assert_eq!(measure.std_dev(), Duration::from_nanos(expected));
+        }
     }
 }

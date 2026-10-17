@@ -1,6 +1,6 @@
 use std::{
     fmt::Display,
-    ops::{Add, AddAssign, Index, IndexMut},
+    ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -108,6 +108,126 @@ impl AddAssign<CoordDiff> for Coord {
     fn add_assign(&mut self, rhs: CoordDiff) {
         self.row = self.row.wrapping_add(rhs.dr as u8);
         self.col = self.col.wrapping_add(rhs.dc as u8);
+    }
+}
+
+impl Add<CoordDiff> for CoordDiff {
+    type Output = CoordDiff;
+
+    fn add(self, rhs: CoordDiff) -> Self::Output {
+        CoordDiff {
+            dr: self.dr + rhs.dr,
+            dc: self.dc + rhs.dc,
+        }
+    }
+}
+
+impl Add<Coord> for CoordDiff {
+    type Output = Coord;
+
+    fn add(self, rhs: Coord) -> Self::Output {
+        rhs + self
+    }
+}
+
+impl Sub<CoordDiff> for Coord {
+    type Output = Coord;
+
+    fn sub(self, rhs: CoordDiff) -> Self::Output {
+        Coord {
+            row: self.row.wrapping_sub(rhs.dr as u8),
+            col: self.col.wrapping_sub(rhs.dc as u8),
+        }
+    }
+}
+
+impl SubAssign<CoordDiff> for Coord {
+    fn sub_assign(&mut self, rhs: CoordDiff) {
+        *self = *self - rhs;
+    }
+}
+
+// Differences outside the i8 range wrap, as in CoordDiff::new.
+impl Sub<Coord> for Coord {
+    type Output = CoordDiff;
+
+    fn sub(self, rhs: Coord) -> Self::Output {
+        CoordDiff::new(
+            self.row as i32 - rhs.row as i32,
+            self.col as i32 - rhs.col as i32,
+        )
+    }
+}
+
+impl Sub<CoordDiff> for CoordDiff {
+    type Output = CoordDiff;
+
+    fn sub(self, rhs: CoordDiff) -> Self::Output {
+        CoordDiff {
+            dr: self.dr - rhs.dr,
+            dc: self.dc - rhs.dc,
+        }
+    }
+}
+
+impl SubAssign<CoordDiff> for CoordDiff {
+    fn sub_assign(&mut self, rhs: CoordDiff) {
+        *self = *self - rhs;
+    }
+}
+
+// Scalar operations use i32 arithmetic, then narrow as in CoordDiff::new.
+impl Mul<i32> for CoordDiff {
+    type Output = CoordDiff;
+
+    fn mul(self, rhs: i32) -> Self::Output {
+        CoordDiff::new(self.dr() * rhs, self.dc() * rhs)
+    }
+}
+
+impl Mul<CoordDiff> for i32 {
+    type Output = CoordDiff;
+
+    fn mul(self, rhs: CoordDiff) -> Self::Output {
+        rhs * self
+    }
+}
+
+impl MulAssign<i32> for CoordDiff {
+    fn mul_assign(&mut self, rhs: i32) {
+        *self = *self * rhs;
+    }
+}
+
+impl Div<i32> for CoordDiff {
+    type Output = CoordDiff;
+
+    fn div(self, rhs: i32) -> Self::Output {
+        CoordDiff::new(self.dr() / rhs, self.dc() / rhs)
+    }
+}
+
+impl DivAssign<i32> for CoordDiff {
+    fn div_assign(&mut self, rhs: i32) {
+        *self = *self / rhs;
+    }
+}
+
+impl AddAssign<CoordDiff> for CoordDiff {
+    fn add_assign(&mut self, rhs: CoordDiff) {
+        self.dr += rhs.dr;
+        self.dc += rhs.dc;
+    }
+}
+
+impl Neg for CoordDiff {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Self {
+            dr: -self.dr,
+            dc: -self.dc,
+        }
     }
 }
 
@@ -229,37 +349,43 @@ impl<T> IndexMut<CoordIndex> for Map2d<T> {
 }
 
 #[derive(Debug, Clone)]
-pub struct ConstMap2d<T, const N: usize> {
-    map: Vec<T>,
+pub struct ConstMap2d<T, const N: usize, const LEN: usize> {
+    map: [T; LEN],
 }
 
-impl<T, const N: usize> ConstMap2d<T, N> {
+impl<T, const N: usize, const LEN: usize> ConstMap2d<T, N, LEN> {
     pub fn new(map: Vec<T>) -> Self {
-        assert_eq!(map.len(), N * N);
+        assert_eq!(LEN, N * N);
+        assert_eq!(map.len(), LEN);
+        let Ok(map) = map.try_into() else {
+            unreachable!("長さ検証済みのVecから配列への変換に失敗しました。");
+        };
+
         Self { map }
     }
 
     pub fn from_fn(mut f: impl FnMut(Coord) -> T) -> Self {
-        let mut map = Vec::with_capacity(N * N);
-
-        for row in 0..N {
-            for col in 0..N {
-                map.push(f(Coord::new(row, col)));
-            }
-        }
+        assert_eq!(LEN, N * N);
+        let map = std::array::from_fn(|index| f(Coord::new(index / N, index % N)));
 
         Self { map }
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        self.map.iter()
+    }
 }
 
-impl<T: Default + Clone, const N: usize> ConstMap2d<T, N> {
+impl<T: Default, const N: usize, const LEN: usize> ConstMap2d<T, N, LEN> {
     pub fn with_default() -> Self {
-        let map = vec![T::default(); N * N];
+        assert_eq!(LEN, N * N);
+        let map = std::array::from_fn(|_| T::default());
+
         Self { map }
     }
 }
 
-impl<T, const N: usize> Index<Coord> for ConstMap2d<T, N> {
+impl<T, const N: usize, const LEN: usize> Index<Coord> for ConstMap2d<T, N, LEN> {
     type Output = T;
 
     #[inline]
@@ -268,14 +394,14 @@ impl<T, const N: usize> Index<Coord> for ConstMap2d<T, N> {
     }
 }
 
-impl<T, const N: usize> IndexMut<Coord> for ConstMap2d<T, N> {
+impl<T, const N: usize, const LEN: usize> IndexMut<Coord> for ConstMap2d<T, N, LEN> {
     #[inline]
     fn index_mut(&mut self, coordinate: Coord) -> &mut Self::Output {
         &mut self.map[coordinate.to_index(N).0]
     }
 }
 
-impl<T, const N: usize> Index<&Coord> for ConstMap2d<T, N> {
+impl<T, const N: usize, const LEN: usize> Index<&Coord> for ConstMap2d<T, N, LEN> {
     type Output = T;
 
     #[inline]
@@ -284,14 +410,14 @@ impl<T, const N: usize> Index<&Coord> for ConstMap2d<T, N> {
     }
 }
 
-impl<T, const N: usize> IndexMut<&Coord> for ConstMap2d<T, N> {
+impl<T, const N: usize, const LEN: usize> IndexMut<&Coord> for ConstMap2d<T, N, LEN> {
     #[inline]
     fn index_mut(&mut self, coordinate: &Coord) -> &mut Self::Output {
         &mut self.map[coordinate.to_index(N).0]
     }
 }
 
-impl<T, const N: usize> Index<usize> for ConstMap2d<T, N> {
+impl<T, const N: usize, const LEN: usize> Index<usize> for ConstMap2d<T, N, LEN> {
     type Output = [T];
 
     #[inline]
@@ -302,7 +428,7 @@ impl<T, const N: usize> Index<usize> for ConstMap2d<T, N> {
     }
 }
 
-impl<T, const N: usize> IndexMut<usize> for ConstMap2d<T, N> {
+impl<T, const N: usize, const LEN: usize> IndexMut<usize> for ConstMap2d<T, N, LEN> {
     #[inline]
     fn index_mut(&mut self, row: usize) -> &mut Self::Output {
         let begin = row * N;
@@ -311,7 +437,7 @@ impl<T, const N: usize> IndexMut<usize> for ConstMap2d<T, N> {
     }
 }
 
-impl<T, const N: usize> Index<CoordIndex> for ConstMap2d<T, N> {
+impl<T, const N: usize, const LEN: usize> Index<CoordIndex> for ConstMap2d<T, N, LEN> {
     type Output = T;
 
     #[inline]
@@ -320,7 +446,7 @@ impl<T, const N: usize> Index<CoordIndex> for ConstMap2d<T, N> {
     }
 }
 
-impl<T, const N: usize> IndexMut<CoordIndex> for ConstMap2d<T, N> {
+impl<T, const N: usize, const LEN: usize> IndexMut<CoordIndex> for ConstMap2d<T, N, LEN> {
     #[inline]
     fn index_mut(&mut self, index: CoordIndex) -> &mut Self::Output {
         &mut self.map[index.0]
@@ -352,6 +478,73 @@ mod test {
     }
 
     #[test]
+    fn coord_translation_round_trip() {
+        for row in 0..=255 {
+            let c = Coord::new(row, 255 - row);
+            for dr in -128..=127 {
+                let d = CoordDiff::new(dr, -1 - dr);
+                assert_eq!(c + d, d + c);
+                assert_eq!((c + d) - d, c);
+                assert_eq!((c + d) - c, d);
+
+                let mut translated = c;
+                translated -= d;
+                assert_eq!(translated + d, c);
+            }
+        }
+    }
+
+    #[test]
+    fn coord_difference() {
+        assert_eq!(Coord::new(2, 9) - Coord::new(5, 4), CoordDiff::new(-3, 5));
+        assert_eq!(
+            Coord::new(255, 0) - Coord::new(0, 255),
+            CoordDiff::new(-1, 1)
+        );
+    }
+
+    #[test]
+    fn coord_diff_arithmetic() {
+        let a = CoordDiff::new(-3, 5);
+        let b = CoordDiff::new(7, -2);
+        assert_eq!(a + b, CoordDiff::new(4, 3));
+        assert_eq!(a - b, CoordDiff::new(-10, 7));
+        assert_eq!(-a, a.invert());
+        assert_eq!(a + (-a), CoordDiff::default());
+
+        let mut d = a;
+        d += b;
+        assert_eq!(d, a + b);
+        d -= b;
+        assert_eq!(d, a);
+    }
+
+    #[test]
+    fn coord_diff_scalar_arithmetic() {
+        let d = CoordDiff::new(-3, 5);
+        assert_eq!(d * -2, CoordDiff::new(6, -10));
+        assert_eq!(-2 * d, d * -2);
+        assert_eq!(d * 0, CoordDiff::default());
+        assert_eq!(d / 2, CoordDiff::new(-1, 2));
+        assert_eq!(d / -2, CoordDiff::new(1, -2));
+        assert_eq!(CoordDiff::new(64, -128) * 2, CoordDiff::new(-128, 0));
+        assert_eq!(CoordDiff::new(-128, 0) / -1, CoordDiff::new(-128, 0));
+        assert_eq!(d / 256, CoordDiff::default());
+
+        let mut scaled = d;
+        scaled *= -2;
+        assert_eq!(scaled, CoordDiff::new(6, -10));
+        scaled /= -2;
+        assert_eq!(scaled, d);
+    }
+
+    #[test]
+    #[should_panic]
+    fn coord_diff_divide_by_zero() {
+        let _ = CoordDiff::new(1, 2) / 0;
+    }
+
+    #[test]
     fn map_new() {
         let map = Map2d::new(vec![0, 1, 2, 3], 2);
         let actual = map[Coord::new(1, 0)];
@@ -369,7 +562,7 @@ mod test {
 
     #[test]
     fn const_map_new() {
-        let map = ConstMap2d::<_, 2>::new(vec![0, 1, 2, 3]);
+        let map = ConstMap2d::<_, 2, 4>::new(vec![0, 1, 2, 3]);
         let actual = map[Coord::new(1, 0)];
         let expected = 2;
         assert_eq!(expected, actual);
@@ -377,7 +570,7 @@ mod test {
 
     #[test]
     fn const_map_default() {
-        let map = ConstMap2d::<_, 2>::with_default();
+        let map = ConstMap2d::<_, 2, 4>::with_default();
         let actual = map[Coord::new(1, 0)];
         let expected = 0;
         assert_eq!(expected, actual);
