@@ -663,7 +663,7 @@ impl<S: State> BeamCallback for DefaultBeamCallback<S> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::beam::common::BeamWidthSuggester;
+    use crate::library::beam::common::BeamWidthSuggester;
 
     #[derive(Clone, Eq, PartialEq)]
     struct TestAction;
@@ -759,7 +759,7 @@ mod tests {
 
     #[test]
     fn beam_search_restores_first_turn_solution() {
-        use crate::beam::common::FixedBeamWidthSuggester;
+        use crate::library::beam::common::FixedBeamWidthSuggester;
         for (finished, max_turn) in [(true, 5), (false, 1), (false, 5)] {
             let search = BeamSearch::new(FixedBeamWidthSuggester::new(1), max_turn);
             let path = search.run(OneStepState { finished }, vec![]).unwrap();

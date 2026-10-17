@@ -115,8 +115,8 @@ pub trait NeighborDelegator: Sized {
 /// # Usage
 ///
 /// ```ignore
-/// use cp_lib_rs::neighbors;
-/// use cp_lib_rs::annealing::{run_annealing, SimdSelector};
+/// use crate::neighbors;
+/// use crate::library::annealing::{run_annealing, SimdSelector};
 /// use std::time::Duration;
 ///
 /// // Env・State、およびNeighborを実装した各近傍の型を別途定義する。
@@ -137,15 +137,15 @@ macro_rules! neighbors {
             $( $variant:ident => $weight:expr ),+ $(,)?
         ]
     ) => {
-        use $crate::annealing::Neighbor as _;
+        use $crate::library::annealing::Neighbor as _;
 
         // step()内のmatch式で使用するNEIGHBOR_INDEXを定義する
-        neighbors! {
+        $crate::neighbors! {
             @index 0; $($variant),+
         }
 
         // 本体
-        neighbors! {
+        $crate::neighbors! {
             @body
             $delegator_name, $env, $state, [
                 $( $variant => $weight ),+
@@ -166,7 +166,7 @@ macro_rules! neighbors {
             const NAMES: &'static [&'static str] = &[$(stringify!($variant), )+];
         }
 
-        impl $crate::annealing::NeighborDelegator for $delegator_name
+        impl $crate::library::annealing::NeighborDelegator for $delegator_name
         {
             type Env = $env;
             type State = $state;
@@ -182,7 +182,7 @@ macro_rules! neighbors {
                 Self::NAMES
             }
 
-            fn step(context: &mut $crate::annealing::AnnealingContext<Self::Env, Self::State>, neighbor_index: usize) {
+            fn step(context: &mut $crate::library::annealing::AnnealingContext<Self::Env, Self::State>, neighbor_index: usize) {
                 match neighbor_index {
                     $($variant::NEIGHBOR_INDEX => {
                         let Some(neighbor) = $variant::generate(context.env, &context.state, &mut context.rng, context.progress) else {
@@ -203,7 +203,7 @@ macro_rules! neighbors {
             const NEIGHBOR_INDEX: usize = $idx;
         }
 
-        neighbors! {
+        $crate::neighbors! {
             @index ($idx + 1); $($tail),+
         }
     };
@@ -372,7 +372,7 @@ impl Display for AnnealingStatistics {
 /// # Usage
 ///
 /// ```
-/// use cp_lib_rs::annealing::{
+/// use crate::library::annealing::{
 ///     run_annealing, AnnealingStatistics, NeighborDelegator, SimdSelector,
 /// };
 /// use std::time::Duration;
@@ -549,7 +549,7 @@ impl ThresholdGenerator {
 
 #[cfg(test)]
 mod test {
-    use crate::{
+    use crate::library::{
         annealing::{SimdSelector, run_annealing},
         random::RandExtension,
     };

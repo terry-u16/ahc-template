@@ -17,7 +17,8 @@ AHC等のヒューリスティック問題を解くためのリポジトリで�
 - `problem.md` は参照専用です。未作成なら、問題文の整理が必要な作業の前に下記の `atcoder-problem-md` skillで `problem.html` から生成してください。公式の必須指示や問題文由来の文章を要約・改変しないでください。
 - 入出力は `src/problem.rs` の `Input` / `Output` にまとめ、`Input::read() -> Self` と `Output` の `Display` を実装してください。入力は `proconio::input!` を使い、各フィールドの意味を `///` で説明してください。
 - 解法は `src/solver/` に追加し、`src/solver.rs` を介して `main.rs` から呼び出してください。モジュールに `mod.rs` は使いません。
-- 2次元グリッドには `Vec<Vec<T>>` ではなく `grid.rs` の `Map2d<T>` を使ってください。乱数・計測・共通処理には既存の `random.rs`・`diagnostics.rs`・`util.rs` を利用してください。
+- 共通ライブラリは `src/library/` に配置し、`src/library.rs` で公開してください。参照は `crate::library::...` を使ってください。
+- 2次元グリッドには `Vec<Vec<T>>` ではなく `src/library/grid.rs` の `Map2d<T>` を使ってください。乱数・計測・共通処理には同ディレクトリの既存の `random.rs`・`diagnostics.rs`・`util.rs` を利用してください。
 - コメントは意図や実装上の制約を中心に記述し、変更に応じた単体テストを各モジュールの `#[cfg(test)]` に置いてください。Rustの変更では `cargo fmt` と関連する `cargo test` を実施し、未実施なら理由を報告してください。
 - Pythonは `uv run` で実行し、実験用スクリプトは `py/` に置いてください。必要なローカル依存は `uv add` で追加できます。生成されたlockファイルは削除不要です。
 - 配布ツールの `tools/` は原則変更しません。必要なtester・visualizerが未ビルドならユーザーに報告してください。大きな実験データや生成物はGitに含めないでください。

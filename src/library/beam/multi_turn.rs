@@ -918,7 +918,7 @@ impl<S: State> BeamCallback for DefaultBeamCallback<S> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::beam::common::{BeamWidthSuggester, FixedBeamWidthSuggester};
+    use crate::library::beam::common::{BeamWidthSuggester, FixedBeamWidthSuggester};
 
     #[derive(Clone, Default, Eq, PartialEq, Debug)]
     enum TestAction {
