@@ -1,4 +1,5 @@
 [template]
+exclude = ["src/diagnostics.rs"]
 name = "ahc-template"
 description = "A template for AHC"
 version = "0.1.0"
